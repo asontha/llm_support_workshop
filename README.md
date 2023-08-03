@@ -52,7 +52,7 @@ Response:
 }
 ```
 
-Once you're done, the `answerHandler` function in `./routes/answer/index.js` should look something like this:
+In order to do that, let's update the `answerHandler` function in `./routes/answer/index.js` like so:
 ```
 async function answerHandler(req, res) {
   
@@ -68,12 +68,15 @@ Alright, time to start looping in some LLM magic.
 
 ### Install SDK and configure environment
 
-First, install let's install OpenAI's Node.js SDK like so:
+First, let's install OpenAI's Node.js SDK:
 ```
 npm install --save openai
 ```
 
-Then, we need to set our OpenAI API Key. In the root of the folder, create a file called `.env.local` and copy the contents of `.env`. Now you'll just want to set the `OPENAI_API_KEY` field with your OpenAI API Key.
+Then, we need to set our OpenAI API Key in `.env`:
+```
+OPENAI_API_KEY=<Your OpenAI API Key>
+```
 
 ### Configure SDK
 
