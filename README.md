@@ -6,10 +6,6 @@ Welcome! This git repo is for a Fintech Devcon 2023 Workshop on "Leveraging LLMs
 
 By the end of this workshop, you will have a microservice deployed on Fly.io that can provide high quality answers to questions about Branch Insurance, just like a Branch Insurance Support Agent would.
 
-- Node.js/Express Microservice
-- Deployed on fly.io
-- Able to answer specific questions about Branch
-
 ## Prerequisites
 
 In order to get started, you'll need to make sure you have the following:
