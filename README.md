@@ -60,7 +60,7 @@ async function answerHandler(req, res) {
 
   res.status(200).send({ answer: `The answer to "${question}" is...` });
 }
-```js
+```
 
 ## Step 3 - Connecting to OpenAI
 
