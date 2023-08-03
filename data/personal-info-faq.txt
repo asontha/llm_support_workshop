@@ -1,0 +1,13 @@
+How does Branch know my current insurance policy?
+It's actually pretty simple! Branch uses a tool called Coverage Verifier provided by our partner, Verisk, to securely access your auto policy information. This allows our system to show you your policy within seconds.
+
+We keep your policy information in our system securely for 60 days so you can revisit your price at your leisure without having to input your information over and over again. After 60 days, we wipe your data from our system.
+
+How does Branch know about my family?
+Because Branch is registered with your state, we can securely access databases like consumer reporting agencies and the DMV to retrieve your personal information. We don't do anything with your information other than use it to build an insurance policy for you.
+
+How does Branch know my car information?
+If your car is registered through your state's Department of Motor Vehicles, companies like Branch can access that information using the DMV's secure system. Don't worry, we don't do anything with your car information other than use it to give you a price for auto insurance and service your policy.
+
+How does Branch know my home information?
+Branch securely and automatically pulls data from publicly available sources based on your address. This allows us to quickly determine things that impact insurance prices: (like the size of your house or its proximity to flood zones for example). We do this to make buying insurance easier for customers.
