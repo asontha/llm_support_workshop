@@ -9,7 +9,8 @@ By the end of this workshop, you will have a microservice deployed on (fly.io)[h
 ## Prerequisites
 
 In order to get started, you'll need to make sure you have the following:
-- Node Version 18
+- (Node Version 18) [https://nodejs.org/en/download]
+- (Docker) [https://docs.docker.com/get-docker/]
 - OpenAI API Key (Create an account [here](https://openai.com/))
 - fly.io Account (Start [here](https://fly.io/docs/hands-on/install-flyctl/))
 
@@ -312,8 +313,43 @@ ${relevant_context[0].item.metadata.text}
 
 And now, if we run the server, you can ask it a variety of questions from the provided data and you'll see that our system dynamically loads and switches content to try and answer questions.
 
+## Step 6 - Deploying our service
 
+Now that our service is ready, let's get it deployed!
 
+### Initializing Our Fly Deployment
 
+fly.io makes this super easy. To start, use this command:
+```bash
+fly launch
+```
 
+Once you're done, this will create three files: `fly.toml`, `Dockerfile`, and `.dockerignore`
 
+Since our server runs on port 8080, we need to make a few small updates to `fly.toml` and `Dockerfile` like so:
+
+`fly.toml`
+```yaml
+  internal_port = 8080
+```
+
+`Dockerfile`
+```
+EXPOSE 8080
+```
+
+### Configuring Secrets
+
+Then we add our OpenAI API Key like so:
+```bash
+fly secrets set OPENAI_API_KEY=<Your OpenAI API Key>
+```
+
+### Deploying On Fly
+
+And finally we deploy:
+```bash
+fly deploy
+```
+
+And that's it! Your microservice is deployed and running as configured.
