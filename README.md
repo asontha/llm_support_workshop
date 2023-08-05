@@ -4,13 +4,13 @@ Welcome! This git repo is for a Fintech Devcon 2023 Workshop on "Leveraging LLMs
 
 ## Objective
 
-By the end of this workshop, you will have a microservice deployed on [fly.io] (https://fly.io) that can provide factually correct answers to simple questions about Branch Insurance.
+By the end of this workshop, you will have a microservice deployed on [fly.io](https://fly.io) that can provide factually correct answers to simple questions about Branch Insurance.
 
 ## Prerequisites
 
 In order to get started, you'll need to make sure you have the following:
-- [Node Version 18] (https://nodejs.org/en/download)
-- [Docker] (https://docs.docker.com/get-docker/)
+- [Node Version 18](https://nodejs.org/en/download)
+- [Docker](https://docs.docker.com/get-docker/)
 - OpenAI API Key (Create an account [here](https://openai.com/))
 - fly.io Account (Start [here](https://fly.io/docs/hands-on/install-flyctl/))
 
