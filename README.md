@@ -4,7 +4,7 @@ Welcome! This git repo is for a Fintech Devcon 2023 Workshop on "Leveraging LLMs
 
 ## Objective
 
-By the end of this workshop, you will have a microservice deployed on Fly.io that can provide high quality answers to questions about Branch Insurance, just like a Branch Insurance Support Agent would.
+By the end of this workshop, you will have a microservice deployed on (fly.io)[https://fly.io] that can provide factually correct answers to simple questions about Branch Insurance.
 
 ## Prerequisites
 
@@ -16,19 +16,29 @@ In order to get started, you'll need to make sure you have the following:
 Additional Recommended Tools:
 - [Postman](https://www.postman.com/downloads/) 
 
+## Step 0 - Install Dependencies
+
+To install dependencies, use:
+```bash
+npm install
+```
+
 ## Step 1 - Running locally
 
-In order the service running simply use `nodemon index.js`. `nodemon` will watch for changes and then automatically refresh our local instance every time we save a file.
-
-Now to make sure everything works, let's place an API request. In order to place API requests, I like to use [Postman](https://www.postman.com/downloads/) but you can also use `curl` like so:
+To start the service, use:
+```bash
+node index.js
 ```
+
+Now to make sure everything works, let's place an API request. In order to place API requests, I recommend using [Postman](https://www.postman.com/downloads/) but you can also use `curl` like so:
+```bash
  curl -H 'Content-Type: application/json' \
       -X POST \
       localhost:8080/answer
 ```
 
 If everything works, you should be able to place a POST request to /answer and you should receive a response like so:
-```
+```json
 {
     "message": "Hello World!"
 }
@@ -39,21 +49,21 @@ If everything works, you should be able to place a POST request to /answer and y
 Since we're creating a microservice that can answer questions, let's define our request and response bodies like so:
 
 Request:
-```
+```json
 {
   "question": "What is branch?"
 }
 ```
 
 Response:
-```
+```json
 {
   "answer": "The answer to \"What is branch?\" is..."
 }
 ```
 
 In order to do that, let's update the `answerHandler` function in `./routes/answer/index.js` like so:
-```
+```js
 async function answerHandler(req, res) {
   
   const question = req.body.question;
@@ -69,7 +79,7 @@ Alright, time to start looping in some LLM magic.
 ### Install SDK and configure environment
 
 First, let's install OpenAI's Node.js SDK:
-```
+```bash
 npm install --save openai
 ```
 
@@ -81,7 +91,7 @@ OPENAI_API_KEY=<Your OpenAI API Key>
 ### Configure SDK
 
 Then we can configure the OpenAI SDK by adding the following code to the top of `./routes/answer/index.js` like so:
-```
+```js
 const express = require('express');
 const { Configuration, OpenAIApi } = require("openai");
 
@@ -94,7 +104,7 @@ const openai = new OpenAIApi(configuration);
 ### Generate an answer
 
 Awesome, now that we have the ability to call OpenAI, let's see what happens when we ask their LLM a question. We can do this by adding the following code inside of our `answerHandler` method and then returning that as part of the API response like so:
-```
+```js
 const question = req.body.question;
 
 let prompt_messages = [{role: "user", content: question}];
@@ -119,17 +129,17 @@ So how do we fix it?
 
 ## Step 4 - Prompt Engineering and Adding Context
 
-We can fix this by taking advantage of the system prompt to provide the LLM with more context before it tries to answer questions about Branch Insurance.
+We can fix this by taking advantage of a bit of prompt engineering to provide the LLM with more context before it tries to answer questions about Branch Insurance. OpenAI makes this simple by providing a `system` role.
 
 Start by adding a method called `buildPrompt` after where we define the `openai` client.
 
-```
+```js
 function buildPrompt(question) {
   return [
     {
       role: "system",
       content: `
-You are a support agent for Branch Insurance that answers users questions.
+You are a support agent for Branch Insurance that answers user's questions.
 
 Here's some additional information about Branch Insurance:
 """
@@ -171,9 +181,139 @@ Branch offers auto, homeowners, renters and umbrella insurance. Because bundling
 ```
 
 Then, let's set `prompt_messages` to what this new method creates like so:
-```
+```js
 let prompt_messages = buildPrompt(question);
 ```
 
-Now, if we test out some questions, we see that with this additional context, the LLM hallucinates much less and can factually answer these questions.
+Now, if we test out some questions, we see that with this additional context, the LLM has up to date information, hallucinates much less for questions that we've provided information about, and can factually answer these questions.
+
+However, there are limitations. Unfortunately, most knowledge sets don't simply fit into the context windows of these LLM models and even if they did fit, it's expensive to use a model's entire context window for each and every single call both in terms of compute and latency.
+
+Furthermore, in the case of Branch Insurance or any other regulated financial product, there are many nuances at the state level. Therefore, we need an algorithm that can cut through to the information that we need first before using the LLM to further refine our answer. 
+
+## Step 5 - Retrieval Augmented Generation (RAG)
+
+Retrieval Augmented Generation (RAG) is the process of first searching for the most relevant pieces of information before generating an answer using an LLM. In order to do so, we first create a search index, and then use the input query or question to search through that index.
+
+### Initializing Our Search Index
+
+For our search index, we'll be using a method known as semantic search. Semantic search differs from a standard keyword search in that it measures how similar two texts are based off of their meaning instead of exactly matching keywords. This is really useful in a member support setting as a lot of the time, users aren't entirely sure what they're asking for. 
+
+Typically, semantic search indexes use a concept known as embeddings to accomplish measuring semantic similarity. Embeddings work by taking something in high dimensional space and reducing them to a lower dimensional space. For example, all of the colors of the universe are a high dimensional space, but we do a pretty good job of representing them using RGB values, which you can think of as a 3 dimensional vector. We then know colors are similar to each other if the distance between their RGB values is low. This is exactly what we're doing, just with large bodies of text.
+
+First, let's install `vectra`, a local vector database for Node.js:
+```bash
+npm install --save vectra
+```
+
+Then, let's set up our index at the top of our endpoint:
+```js
+const { LocalIndex } = require('vectra');
+
+const index = new LocalIndex('./index');
+```
+
+Now, let's initialize our index at the top of our endpoint handler:
+```js
+// Init search index
+if (!await index.isIndexCreated()) {
+    await index.createIndex();
+    await loadIndex();
+    console.log("Index loaded!");
+}
+```
+
+And then define the `loadIndex` method along with it's helper methods like so. This will set up our index with the faq's provided in the `data` folder.
+```js
+async function getVector(text) {
+  const response = await openai.createEmbedding({
+      'model': 'text-embedding-ada-002',
+      'input': text,
+  });
+  return response.data.data[0].embedding;
+}
+
+async function addItem(text) {
+  await index.insertItem({
+      vector: await getVector(text),
+      metadata: { text }
+  });
+}
+
+async function loadIndex() {
+
+  const files = [
+    'branch-faq.txt',
+    'bundling-faq.txt',
+    'car-insurance-faq.txt',
+    'home-insurance-faq.txt',
+    'personal-info-faq.txt'
+  ]
+
+  for(let file in files) {
+    let text = fs.readFileSync(`./data/${file}`);
+    await addItem(text.toString());
+  }
+}
+```
+
+We'll also need to import `fs` at the top:
+```js
+const fs = require('fs');
+```
+
+Now, if you run the server and place a request, you can see what we have in our index under the newly created `index` folder.
+
+### Querying Our Index And Dynamic Prompt Context
+
+Now, to get the most relevant content related to the question is simple.
+
+First, let's add a new helper method to query our index:
+```js
+async function query(text) {
+  const vector = await getVector(text);
+  return index.queryItems(vector, 1);
+}
+```
+
+And then we can update our endpoint handler to use the incoming question to fetch the related context and pass it over to our prompt builder:
+```js
+
+const question = req.body.question;
+
+let relevant_context = await query(question);
+
+let prompt_messages = buildPrompt(question, relevant_context);
+
+```
+
+Finally, we just need to update how we build our prompt like so:
+```js
+function buildPrompt(question, relevant_context) {
+  return [
+    {
+      role: "system",
+      content: `
+You are a support agent for Branch Insurance that answers users questions.
+
+Here's some additional information about Branch Insurance:
+"""
+${relevant_context[0].item.metadata.text}
+"""
+`
+    },
+    {
+      role: "user",
+      content: question
+    }
+  ]
+}
+```
+
+And now, if we run the server, you can ask it a variety of questions from the provided data and you'll see that our system dynamically loads and switches content to try and answer questions.
+
+
+
+
+
 
