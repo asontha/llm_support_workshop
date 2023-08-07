@@ -214,7 +214,7 @@ const { LocalIndex } = require('vectra');
 const index = new LocalIndex('./index');
 ```
 
-Now, let's initialize our index at the top of our endpoint handler:
+Now, let's do a lazy initialization of our index at the top of `answerHandler`:
 ```js
 // Init search index
 if (!await index.isIndexCreated()) {
@@ -223,6 +223,8 @@ if (!await index.isIndexCreated()) {
     console.log("Index loaded!");
 }
 ```
+
+Normally, we would preprocess and load our index offline using a datapipeline along with a hosted vector database.
 
 And then define the `loadIndex` method along with it's helper methods like so. This will set up our index with the faq's provided in the `data` folder.
 ```js
@@ -251,7 +253,7 @@ async function loadIndex() {
     'personal-info-faq.txt'
   ]
 
-  for(let file in files) {
+  for(let file of files) {
     let text = fs.readFileSync(`./data/${file}`);
     await addItem(text.toString());
   }
